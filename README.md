@@ -1,3 +1,7 @@
+
+## 📁 Cấu trúc thư mục dự án
+
+```text
 ChoPTITers/
 ├── pom.xml
 ├── README.md
@@ -78,3 +82,4 @@ ChoPTITers/
 │
 └── docs/
     └── architecture.md
+```
