@@ -18,7 +18,6 @@ public class User {
     public User() {
     }
 
-    // Constructor của module-1 (có username, password)
     public User(int userId, String publicId, String username, String password,
                 String email, String fullName, String phone, String status, String role) {
         this.userId = userId;
@@ -44,12 +43,10 @@ public class User {
         this.role = role;
     }
 
-    /** Tài khoản đang hoạt động (không bị khóa). */
     public boolean checkActive() {
         return "ACTIVE".equalsIgnoreCase(status);
     }
 
-    /** Đủ điều kiện bán: đang hoạt động và đã có số điện thoại liên hệ. */
     public boolean checkSellerEligibility() {
         return checkActive() && phone != null && !phone.trim().isEmpty();
     }

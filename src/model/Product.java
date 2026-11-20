@@ -21,7 +21,6 @@ public class Product {
     public Product() {
     }
 
-    // Constructor của module-1
     public Product(int productId, int sellerId, int categoryId, String title, float price,
                    int stock, int reservedStock, String status, String approvalStatus,
                    String moderationStatus, boolean isDeleted, String description) {

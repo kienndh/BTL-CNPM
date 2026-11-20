@@ -19,7 +19,6 @@ public class ProductDAO extends DAO {
         super();
     }
 
-    // ===== Module-1: danh sách tin đăng công khai =====
 
     public List<Product> findPublicListings(String keyword) {
         List<Product> list = new ArrayList<>();
@@ -45,7 +44,6 @@ public class ProductDAO extends DAO {
         return list;
     }
 
-    // ===== Module-2: chi tiết / đăng / sửa / rút tin =====
 
     public Product getProductDetail(int productId) {
         String sql = SELECT_COLUMNS + "WHERE productId = ?";
@@ -62,7 +60,6 @@ public class ProductDAO extends DAO {
         return null;
     }
 
-    /** UC06: kiểm tra dữ liệu, lưu tin đăng mới và trả về tin vừa tạo. */
     public Product createListing(int sellerId, Product listingData) {
         validateListing(listingData);
 
@@ -102,7 +99,6 @@ public class ProductDAO extends DAO {
         return p;
     }
 
-    /** UC07: kiểm tra quyền sở hữu, điều kiện chỉnh sửa, giá mới; cập nhật giá và trả về tin sau khi sửa. */
     public Product updateListing(int productId, int sellerId, float price) {
         Product p = getMyListingDetail(productId, sellerId);
         if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {
@@ -129,7 +125,6 @@ public class ProductDAO extends DAO {
         return getProductDetail(productId);
     }
 
-    /** UC08: kiểm tra quyền sở hữu, điều kiện rút; chuyển tin sang HIDDEN (không xóa bản ghi) và trả về tin sau khi rút. */
     public Product removeListing(int productId, int sellerId) {
         Product p = getMyListingDetail(productId, sellerId);
         if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {

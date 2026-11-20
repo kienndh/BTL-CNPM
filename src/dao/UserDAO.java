@@ -13,7 +13,6 @@ public class UserDAO extends DAO {
         super();
     }
 
-    // ===== Module-1: đăng nhập / đăng ký =====
 
     public User login(String username, String password) {
         String sql = "SELECT userId, publicId, username, password, email, fullName, phone, status, role "
@@ -96,7 +95,6 @@ public class UserDAO extends DAO {
         return false;
     }
 
-    // ===== Module-2: hồ sơ / điều kiện người bán =====
 
     public User getMyProfile(int userId) {
         User u = findById(userId);
@@ -109,7 +107,6 @@ public class UserDAO extends DAO {
         return u;
     }
 
-    /** UC03: kiểm tra và cập nhật số điện thoại, trả về hồ sơ sau cập nhật. */
     public User updateProfile(int userId, String phone) {
         if (phone == null || !phone.trim().matches(PHONE_REGEX)) {
             throw new IllegalArgumentException("Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 0)");
@@ -128,7 +125,6 @@ public class UserDAO extends DAO {
         return findById(userId);
     }
 
-    /** UC06, UC07, UC08: kiểm tra điều kiện người bán. */
     public boolean checkSellerEligibility(int userId) {
         User u = findById(userId);
         return u != null && u.checkSellerEligibility();
