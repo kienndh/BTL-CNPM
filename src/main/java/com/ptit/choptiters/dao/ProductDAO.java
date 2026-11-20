@@ -72,7 +72,7 @@ public class ProductDAO extends DAO {
         }
         return p;
     }
-    /** UC07: kiểm tra quyền sở hữu, điều kiện chỉnh sửa, giá mới; cập nhật giá và trả về tin sau khi sửa. */
+
     public Product updateListing(int productId, int sellerId, float price) {
         Product p = getMyListingDetail(productId, sellerId);
         if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {
@@ -98,6 +98,7 @@ public class ProductDAO extends DAO {
         }
         return getProductDetail(productId);
     }
+
     private void validateListing(Product p) {
         if (p.getTitle() == null || p.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên tin không được để trống");

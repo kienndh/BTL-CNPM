@@ -93,7 +93,6 @@ public class UpdateListingFrm extends JFrame implements ActionListener {
     }
 
     private void btnSaveClick() {
-        // Đọc giá mới, kiểm tra dữ liệu nhập và chuyển sang kiểu số
         String input = txtPrice.getText().trim().replace(".", "").replace(",", "");
         if (input.isEmpty()) {
             showMessage("Vui lòng nhập giá bán mới");
@@ -121,7 +120,6 @@ public class UpdateListingFrm extends JFrame implements ActionListener {
         return NumberFormat.getInstance(new Locale("vi", "VN")).format(price);
     }
 
-    /** Đổi trạng thái trong CSDL sang chữ tiếng Việt để hiển thị. */
     private String getStatusText(Product p) {
         if (p.isDeleted()) return "Đã xóa";
         if ("HIDDEN".equalsIgnoreCase(p.getStatus())) return "Đã rút";
@@ -134,7 +132,6 @@ public class UpdateListingFrm extends JFrame implements ActionListener {
         lblMessage.setText(msg);
     }
 
-    // Chạy thử khi chưa có chức năng đăng nhập (Module 01) và danh sách "Tin của tôi"
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             String seller = JOptionPane.showInputDialog(null,
