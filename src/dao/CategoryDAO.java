@@ -14,7 +14,6 @@ public class CategoryDAO extends DAO {
         super();
     }
 
-    /** UC06: lấy các danh mục chưa bị xóa. */
     public List<Category> getCategories() {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT categoryId, slug, name, isDeleted FROM tblCategory "

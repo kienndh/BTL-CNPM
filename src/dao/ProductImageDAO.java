@@ -12,7 +12,6 @@ public class ProductImageDAO extends DAO {
         super();
     }
 
-    /** UC06: gán productId cho các ảnh và lưu vào tblProductImage. */
     public void attachImages(int productId, List<ProductImage> images) {
         if (images == null || images.isEmpty()) {
             return;
