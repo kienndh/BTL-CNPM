@@ -39,7 +39,7 @@ public class ProductDAO extends DAO {
 
         String sql = "INSERT INTO tblProduct (sellerId, categoryId, title, description, price, stock, "
                 + "reservedStock, status, approvalStatus, moderationStatus, isDeleted) "
-                + "VALUES (?, ?, ?, ?, ?, ?, 0, 'AVAILABLE', 'APPROVED', 'CLEAR', FALSE)";
+                + "VALUES (?, ?, ?, ?, ?, ?, 0, 'AVAILABLE', 'PENDING', 'CLEAR', FALSE)";
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, sellerId);
             ps.setInt(2, listingData.getCategoryId());
@@ -60,6 +60,43 @@ public class ProductDAO extends DAO {
             throw new RuntimeException("Lỗi tạo tin đăng: " + e.getMessage(), e);
         }
         throw new RuntimeException("Tạo tin đăng thất bại");
+    }
+
+    public Product getMyListingDetail(int productId, int sellerId) {
+        Product p = getProductDetail(productId);
+        if (p == null || p.isDeleted()) {
+            throw new RuntimeException("Không tìm thấy tin đăng");
+        }
+        if (p.getSellerId() != sellerId) {
+            throw new RuntimeException("Bạn không có quyền thao tác với tin đăng này");
+        }
+        return p;
+    }
+
+    public Product updateListing(int productId, int sellerId, float price) {
+        Product p = getMyListingDetail(productId, sellerId);
+        if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {
+            throw new RuntimeException("Tin đã bị rút, không thể chỉnh sửa");
+        }
+        if (price <= 0) {
+            throw new IllegalArgumentException("Giá bán phải lớn hơn 0");
+        }
+        if (price == p.getPrice()) {
+            throw new IllegalArgumentException("Giá mới trùng với giá hiện tại");
+        }
+        String sql = "UPDATE tblProduct SET price = ? "
+                + "WHERE productId = ? AND sellerId = ? AND isDeleted = FALSE AND status <> 'HIDDEN'";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setFloat(1, price);
+            ps.setInt(2, productId);
+            ps.setInt(3, sellerId);
+            if (ps.executeUpdate() == 0) {
+                throw new RuntimeException("Cập nhật tin đăng thất bại");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi cập nhật tin đăng: " + e.getMessage(), e);
+        }
+        return getProductDetail(productId);
     }
 
     private void validateListing(Product p) {

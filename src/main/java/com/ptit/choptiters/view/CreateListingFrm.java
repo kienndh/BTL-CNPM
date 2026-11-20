@@ -58,7 +58,7 @@ public class CreateListingFrm extends JFrame implements ActionListener {
         txtDescription = new JTextArea(4, 25);
         txtDescription.setLineWrap(true);
         txtImages = new JTextField();
-        txtImages.setToolTipText("Nhiều ảnh cách nhau bằng dấu phẩy. Ảnh đầu tiên là ảnh đại diện");
+        txtImages.setToolTipText("Bấm \"Chọn ảnh...\" để chọn. Ảnh đầu tiên là ảnh đại diện");
         btnCreate = new JButton("Tạo tin");
         lblMessage = new JLabel(" ");
         btnCreate.addActionListener(this);
@@ -177,6 +177,11 @@ public class CreateListingFrm extends JFrame implements ActionListener {
                 images.add(new ProductImage(url.trim(), images.isEmpty(), images.size()));
             }
         }
+        String imageError = validateImages(images);
+        if (imageError != null) {
+            showMessage(imageError);
+            return;
+        }
         listingData.setImages(images);
 
         try {
@@ -184,9 +189,38 @@ public class CreateListingFrm extends JFrame implements ActionListener {
             productImageDAO.attachImages(p.getProductId(), images);
             displayProduct(p);
             showMessage("Tạo tin đăng thành công");
+            resetForm();
         } catch (RuntimeException ex) {
             showMessage(ex.getMessage());
         }
+    }
+
+    private String validateImages(List<ProductImage> images) {
+        if (images.isEmpty()) {
+            return "Vui lòng chọn ít nhất 1 hình ảnh";
+        }
+        for (ProductImage img : images) {
+            String path = img.getImageUrl();
+            if (!path.toLowerCase().matches(".*\\.(jpg|jpeg|png|gif)$")) {
+                return "Ảnh không đúng định dạng (jpg, jpeg, png, gif): " + path;
+            }
+            if (!new File(path).isFile()) {
+                return "Không tìm thấy file ảnh: " + path;
+            }
+        }
+        return null;
+    }
+
+    private void resetForm() {
+        txtTitle.setText("");
+        txtPrice.setText("");
+        txtStock.setText("1");
+        txtDescription.setText("");
+        txtImages.setText("");
+        if (cboCategory.getItemCount() > 0) {
+            cboCategory.setSelectedIndex(0);
+        }
+        txtTitle.requestFocus();
     }
 
     private void displayProduct(Product p) {
