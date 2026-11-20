@@ -1,0 +1,140 @@
+CREATE DATABASE IF NOT EXISTS choptiters
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE choptiters;
+
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS tblOrderStatusHistory;
+DROP TABLE IF EXISTS tblOrderItem;
+DROP TABLE IF EXISTS tblOrder;
+DROP TABLE IF EXISTS tblProductImage;
+DROP TABLE IF EXISTS tblProduct;
+DROP TABLE IF EXISTS tblCategory;
+DROP TABLE IF EXISTS tblUser;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 1. Người dùng (Module 1, 2, 3, 4)
+CREATE TABLE tblUser (
+    userId INT AUTO_INCREMENT PRIMARY KEY,
+    publicId VARCHAR(50) NOT NULL UNIQUE,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    fullName VARCHAR(150) NOT NULL,
+    phone VARCHAR(20) NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    role VARCHAR(30) NOT NULL DEFAULT 'STUDENT'
+);
+
+-- 2. Danh mục sản phẩm (Module 2)
+CREATE TABLE tblCategory (
+    categoryId INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL
+);
+
+-- 3. Tin đăng / Sản phẩm (Module 1, 2, 3, 4)
+CREATE TABLE tblProduct (
+    productId INT AUTO_INCREMENT PRIMARY KEY,
+    sellerId INT NOT NULL,
+    categoryId INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    price FLOAT NOT NULL,
+    stock INT NOT NULL DEFAULT 1,
+    reservedStock INT NOT NULL DEFAULT 0,
+    status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
+    approvalStatus VARCHAR(30) NOT NULL DEFAULT 'APPROVED',
+    moderationStatus VARCHAR(30) NOT NULL DEFAULT 'CLEAR',
+    isDeleted TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_product_seller FOREIGN KEY (sellerId) REFERENCES tblUser(userId),
+    CONSTRAINT fk_product_category FOREIGN KEY (categoryId) REFERENCES tblCategory(categoryId)
+);
+
+-- 4. Ảnh sản phẩm (Module 2)
+CREATE TABLE tblProductImage (
+    imageId INT AUTO_INCREMENT PRIMARY KEY,
+    productId INT NOT NULL,
+    imageUrl VARCHAR(500) NOT NULL,
+    isPrimary TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_image_product FOREIGN KEY (productId) REFERENCES tblProduct(productId) ON DELETE CASCADE
+);
+
+-- 5. Đơn hàng (Module 3, 4)
+CREATE TABLE tblOrder (
+    orderId INT AUTO_INCREMENT PRIMARY KEY,
+    buyerId INT NOT NULL,
+    sellerId INT NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    fulfillmentMethod VARCHAR(30) NOT NULL,
+    paymentMethod VARCHAR(30) NOT NULL,
+    paymentStatus VARCHAR(30) NOT NULL DEFAULT 'UNPAID',
+    meetupPlace VARCHAR(255) NULL,
+    cancelledBy INT NULL,
+    completedAt DATETIME NULL,
+    CONSTRAINT fk_order_buyer FOREIGN KEY (buyerId) REFERENCES tblUser(userId),
+    CONSTRAINT fk_order_seller FOREIGN KEY (sellerId) REFERENCES tblUser(userId)
+);
+
+-- 6. Chi tiết mặt hàng trong đơn (Module 3, 4)
+CREATE TABLE tblOrderItem (
+    orderItemId INT AUTO_INCREMENT PRIMARY KEY,
+    orderId INT NOT NULL,
+    productId INT NOT NULL,
+    productTitle VARCHAR(200) NOT NULL,
+    quantity INT NOT NULL,
+    priceAtPurchase FLOAT NOT NULL,
+    CONSTRAINT fk_item_order FOREIGN KEY (orderId) REFERENCES tblOrder(orderId) ON DELETE CASCADE,
+    CONSTRAINT fk_item_product FOREIGN KEY (productId) REFERENCES tblProduct(productId)
+);
+
+-- 7. Lịch sử trạng thái đơn hàng (Module 3 insert tblUserId; Module 4 insert cả tblOrderId & tblUserId)
+CREATE TABLE tblOrderStatusHistory (
+    historyId INT AUTO_INCREMENT PRIMARY KEY,
+    orderId INT NOT NULL,
+    fromStatus VARCHAR(30) NULL,
+    toStatus VARCHAR(30) NOT NULL,
+    changedBy INT NULL,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tblOrderId INT NULL,
+    tblUserId INT NULL,
+    CONSTRAINT fk_hist_order FOREIGN KEY (orderId) REFERENCES tblOrder(orderId) ON DELETE CASCADE
+);
+
+-- ==================== DỮ LIỆU MẪU ĐỂ TEST ====================
+
+INSERT INTO tblUser (userId, publicId, username, password, email, fullName, phone, status, role) VALUES
+(1, 'PTIT-001', 'kienndh', '123456', 'kienndh@stu.ptit.edu.vn', 'Nguyễn Đức Hoàng Kiên', '0912345678', 'ACTIVE', 'STUDENT'),
+(2, 'PTIT-002', 'huypg',   '123456', 'huypg@stu.ptit.edu.vn',   'Phan Gia Huy',          '0987654321', 'ACTIVE', 'STUDENT'),
+(3, 'PTIT-003', 'admin',   '123456', 'admin@ptit.edu.vn',       'Quản trị viên PTIT',    '0900000000', 'ACTIVE', 'ADMIN');
+
+INSERT INTO tblCategory (categoryId, name, description) VALUES
+(1, 'Giáo trình & Tài liệu', 'Sách giáo trình, đề cương, slide môn học PTIT'),
+(2, 'Đồ điện tử & Linh kiện', 'Laptop, chuột, bàn phím, kit vi điều khiển'),
+(3, 'Đồ dùng sinh viên', 'Đồ gia dụng phòng trọ, balo, dụng cụ học tập');
+
+INSERT INTO tblProduct (productId, sellerId, categoryId, title, description, price, stock, reservedStock, status, approvalStatus, moderationStatus, isDeleted) VALUES
+(1, 2, 1, 'Giáo trình Nhập môn Công nghệ phần mềm', 'Sách còn mới 95%, không viết vẽ bậy', 45000, 5, 1, 'AVAILABLE', 'APPROVED', 'CLEAR', 0),
+(2, 2, 2, 'Kit thực hành Vi xử lý 8086 + mạch nạp', 'Đầy đủ dây cắm, test chạy tốt', 250000, 3, 1, 'AVAILABLE', 'APPROVED', 'CLEAR', 0),
+(3, 1, 2, 'Chuột không dây Logitech M331 Silent', 'Pin trâu, bấm êm không tiếng ồn', 180000, 4, 0, 'AVAILABLE', 'APPROVED', 'CLEAR', 0),
+(4, 1, 3, 'Đèn bàn học chống cận Rạng Đông', 'Bóng LED ánh sáng vàng dịu mắt', 120000, 2, 0, 'AVAILABLE', 'PENDING', 'CLEAR', 0);
+
+INSERT INTO tblProductImage (productId, imageUrl, isPrimary) VALUES
+(1, 'images/cnpm_book.jpg', 1),
+(2, 'images/kit_8086.jpg', 1),
+(3, 'images/logitech_m331.jpg', 1);
+
+-- Đơn #1: Kiên (user 1) mua của Huy (user 2), đang PENDING -> test Chấp nhận đơn (M4) hoặc Hủy đơn (M3)
+INSERT INTO tblOrder (orderId, buyerId, sellerId, status, fulfillmentMethod, paymentMethod, paymentStatus, meetupPlace, cancelledBy) VALUES
+(1, 1, 2, 'PENDING', 'MEETUP', 'CASH_ON_MEETUP', 'UNPAID', 'Sảnh nhà A2 - PTIT', NULL),
+-- Đơn #2: Kiên (user 1) mua của Huy (user 2), đã CONFIRMED + MEETUP + PAID -> test Hoàn tất đơn (M4)
+(2, 1, 2, 'CONFIRMED', 'MEETUP', 'CASH_ON_MEETUP', 'PAID', 'Cổng chính PTIT Km10', NULL);
+
+INSERT INTO tblOrderItem (orderItemId, orderId, productId, productTitle, quantity, priceAtPurchase) VALUES
+(1, 1, 1, 'Giáo trình Nhập môn Công nghệ phần mềm', 1, 45000),
+(2, 2, 2, 'Kit thực hành Vi xử lý 8086 + mạch nạp', 1, 250000);
+
+INSERT INTO tblOrderStatusHistory (orderId, fromStatus, toStatus, changedBy, createdAt, tblOrderId, tblUserId) VALUES
+(1, NULL, 'PENDING', 1, NOW(), 1, 1),
+(2, NULL, 'PENDING', 1, NOW(), 2, 1),
+(2, 'PENDING', 'CONFIRMED', 2, NOW(), 2, 2);
