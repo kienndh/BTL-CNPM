@@ -11,7 +11,7 @@ public class User {
     private String phone;
     private String status;
     private String role;
-    //private List<Product> sellingProducts = new ArrayList<>();
+    private List<Product> sellingProducts = new ArrayList<>();
 
     public User() {
     }
@@ -58,6 +58,6 @@ public class User {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
-    //public List<Product> getSellingProducts() { return sellingProducts; }
-    //public void setSellingProducts(List<Product> sellingProducts) { this.sellingProducts = sellingProducts; }
+    public List<Product> getSellingProducts() { return sellingProducts; }
+    public void setSellingProducts(List<Product> sellingProducts) { this.sellingProducts = sellingProducts; }
 }
