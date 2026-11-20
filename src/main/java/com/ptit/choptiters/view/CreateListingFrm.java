@@ -127,7 +127,7 @@ public class CreateListingFrm extends JFrame implements ActionListener {
                 if (paths.length() > 0) paths.append(",");
                 paths.append(f.getAbsolutePath());
             }
-            txtImages.setText(paths.toString());   // ảnh đầu tiên là ảnh đại diện
+            txtImages.setText(paths.toString());
         }
     }
 
@@ -140,7 +140,6 @@ public class CreateListingFrm extends JFrame implements ActionListener {
     }
 
     private void btnCreateClick() {
-        // 1. Đọc và kiểm tra dữ liệu trên form
         Category category = (Category) cboCategory.getSelectedItem();
         if (txtTitle.getText().trim().isEmpty()) {
             showMessage("Vui lòng nhập tên tin");

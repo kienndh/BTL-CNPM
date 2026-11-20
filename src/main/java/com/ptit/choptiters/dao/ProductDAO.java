@@ -72,7 +72,7 @@ public class ProductDAO extends DAO {
         }
         return p;
     }
-
+    /** UC07: kiểm tra quyền sở hữu, điều kiện chỉnh sửa, giá mới; cập nhật giá và trả về tin sau khi sửa. */
     public Product updateListing(int productId, int sellerId, float price) {
         Product p = getMyListingDetail(productId, sellerId);
         if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {
@@ -95,6 +95,31 @@ public class ProductDAO extends DAO {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Lỗi cập nhật tin đăng: " + e.getMessage(), e);
+        }
+        return getProductDetail(productId);
+    }
+
+    /** UC08: kiểm tra quyền sở hữu, điều kiện rút; chuyển tin sang HIDDEN (không xóa bản ghi) và trả về tin sau khi rút. */
+    public Product removeListing(int productId, int sellerId) {
+        Product p = getMyListingDetail(productId, sellerId);
+        if ("HIDDEN".equalsIgnoreCase(p.getStatus())) {
+            throw new RuntimeException("Tin đã được rút trước đó");
+        }
+        if (p.getReservedStock() > 0) {
+            throw new RuntimeException("Tin đang có đơn hàng chưa xử lý xong, không thể rút");
+        }
+
+        String sql = "UPDATE tblProduct SET status = 'HIDDEN' "
+                + "WHERE productId = ? AND sellerId = ? AND isDeleted = FALSE "
+                + "AND status <> 'HIDDEN' AND reservedStock = 0";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.setInt(2, sellerId);
+            if (ps.executeUpdate() == 0) {
+                throw new RuntimeException("Rút tin đăng thất bại");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi rút tin đăng: " + e.getMessage(), e);
         }
         return getProductDetail(productId);
     }
