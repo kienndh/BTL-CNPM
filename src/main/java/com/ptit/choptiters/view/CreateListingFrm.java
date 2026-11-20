@@ -9,7 +9,9 @@ import com.ptit.choptiters.model.Product;
 import com.ptit.choptiters.model.ProductImage;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
@@ -21,7 +23,7 @@ public class CreateListingFrm extends JFrame implements ActionListener {
     private JTextField txtTitle, txtPrice, txtStock, txtImages;
     private JTextArea txtDescription;
     private JComboBox<Category> cboCategory;
-    private JButton btnCreate;
+    private JButton btnCreate, btnChooseImages;
     private JLabel lblMessage;
 
     private final int sellerId;
@@ -70,7 +72,14 @@ public class CreateListingFrm extends JFrame implements ActionListener {
         addRow(form, c, 2, "Giá bán (đ):", txtPrice);
         addRow(form, c, 3, "Số lượng:", txtStock);
         addRow(form, c, 4, "Mô tả:", new JScrollPane(txtDescription));
-        addRow(form, c, 5, "Hình ảnh:", txtImages);
+        btnChooseImages = new JButton("Chọn ảnh...");
+        btnChooseImages.addActionListener(this);
+        txtImages.setEditable(false);
+
+        JPanel imagePanel = new JPanel(new BorderLayout(5, 0));
+        imagePanel.add(txtImages, BorderLayout.CENTER);
+        imagePanel.add(btnChooseImages, BorderLayout.EAST);
+        addRow(form, c, 5, "Hình ảnh:", imagePanel);
 
         JPanel bottom = new JPanel(new BorderLayout(5, 5));
         bottom.add(btnCreate, BorderLayout.NORTH);
@@ -99,6 +108,26 @@ public class CreateListingFrm extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnCreate) {
             btnCreateClick();
+        } else if (e.getSource() == btnChooseImages) {
+            btnChooseImagesClick();
+        }
+    }
+
+    private void btnChooseImagesClick() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn hình ảnh sản phẩm");
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "Ảnh (jpg, jpeg, png, gif)", "jpg", "jpeg", "png", "gif"));
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            StringBuilder paths = new StringBuilder();
+            for (File f : chooser.getSelectedFiles()) {
+                if (paths.length() > 0) paths.append(",");
+                paths.append(f.getAbsolutePath());
+            }
+            txtImages.setText(paths.toString());   // ảnh đầu tiên là ảnh đại diện
         }
     }
 
