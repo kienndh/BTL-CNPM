@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Order {
@@ -16,6 +17,7 @@ public class Order {
     private int cancelledBy;
     private List<OrderItem> items = new ArrayList<>();
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+    private Date completedAt;
 
     public Order() {
     }
@@ -114,5 +116,13 @@ public class Order {
 
     public void setStatusHistory(List<OrderStatusHistory> statusHistory) {
         this.statusHistory = statusHistory;
+    }
+
+    public Date getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(Date completedAt) {
+        this.completedAt = completedAt;
     }
 }
