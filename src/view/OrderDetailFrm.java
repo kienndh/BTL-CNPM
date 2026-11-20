@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 
 public class OrderDetailFrm extends JFrame implements ActionListener {
     private JLabel lblOrderCode;
@@ -20,17 +21,20 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
     private JLabel lblPayment;
     private JLabel lblMeetupPlace;
     private JLabel lblTotal;
-    private JTable tblItems;
-    private JPanel pnlTimeline;
-    private JLabel lblMessage;
-    private JButton btnBack;
-    private User u;
-    private Order o;
     private JLabel lblCreatedAt;
     private JLabel lblContactName;
     private JLabel lblContactPhone;
     private JLabel lblCancellationReason;
+    private JTable tblItems;
+    private JPanel pnlTimeline;
+    private JLabel lblMessage;
     private JButton btnCancel;
+    private JButton btnConfirm;
+    private JButton btnMarkDelivering;
+    private JButton btnCompleteOrder;
+    private JButton btnBack;
+    private User u;
+    private Order o;
 
     public OrderDetailFrm(User u, Order o) {
         super("Chi tiết đơn hàng");
@@ -48,10 +52,11 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         lblContactName = new JLabel(u != null && u.getFullName() != null ? u.getFullName() : "");
         lblContactPhone = new JLabel(u != null && u.getPhone() != null ? u.getPhone() : "");
         lblCancellationReason = new JLabel();
-        lblMessage = new JLabel();
+
+        lblMessage = new JLabel(" ");
         lblMessage.setForeground(Color.RED);
 
-        DefaultTableModel itemsModel = new DefaultTableModel(
+        DefaultTableModel model = new DefaultTableModel(
                 new String[]{"Item ID", "Product ID", "Sản phẩm", "Số lượng", "Đơn giá"}, 0
         ) {
             @Override
@@ -59,20 +64,25 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
                 return false;
             }
         };
-        tblItems = new JTable(itemsModel);
+        tblItems = new JTable(model);
 
         pnlTimeline = new JPanel();
         pnlTimeline.setLayout(new BoxLayout(pnlTimeline, BoxLayout.Y_AXIS));
         pnlTimeline.setBorder(BorderFactory.createTitledBorder("Lịch sử trạng thái"));
 
         btnCancel = new JButton("Hủy đơn");
-        btnCancel.addActionListener(this);
-
+        btnConfirm = new JButton("Chấp nhận đơn");
+        btnMarkDelivering = new JButton("Đánh dấu đang giao");
+        btnCompleteOrder = new JButton("Hoàn tất đơn");
         btnBack = new JButton("Quay lại");
+
+        btnCancel.addActionListener(this);
+        btnConfirm.addActionListener(this);
+        btnMarkDelivering.addActionListener(this);
+        btnCompleteOrder.addActionListener(this);
         btnBack.addActionListener(this);
 
         JPanel info = new JPanel(new GridLayout(6, 4, 8, 6));
-        info.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         info.add(new JLabel("Mã đơn:"));
         info.add(lblOrderCode);
         info.add(new JLabel("Người bán:"));
@@ -98,40 +108,90 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         info.add(new JLabel());
         info.add(new JLabel());
 
-        JPanel center = new JPanel(new BorderLayout(8, 8));
-        center.add(new JScrollPane(tblItems), BorderLayout.CENTER);
-        center.add(new JScrollPane(pnlTimeline), BorderLayout.SOUTH);
+        JSplitPane center = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                new JScrollPane(tblItems),
+                new JScrollPane(pnlTimeline)
+        );
+        center.setResizeWeight(0.65);
 
-        JPanel bottom = new JPanel(new BorderLayout(8, 8));
-        bottom.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        buttons.add(btnConfirm);
+        buttons.add(btnMarkDelivering);
+        buttons.add(btnCompleteOrder);
         buttons.add(btnCancel);
         buttons.add(btnBack);
+
+        JPanel bottom = new JPanel(new BorderLayout(8, 8));
         bottom.add(lblMessage, BorderLayout.CENTER);
-        bottom.add(buttons, BorderLayout.EAST);
+        bottom.add(buttons, BorderLayout.SOUTH);
 
-        setLayout(new BorderLayout(8, 8));
-        add(info, BorderLayout.NORTH);
-        add(center, BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
+        JPanel content = new JPanel(new BorderLayout(10, 10));
+        content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        content.add(info, BorderLayout.NORTH);
+        content.add(center, BorderLayout.CENTER);
+        content.add(bottom, BorderLayout.SOUTH);
 
-        displayOrder();
-
-        setSize(740, 560);
+        setContentPane(content);
+        setSize(900, 620);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        displayOrder();
     }
 
     private void displayOrder() {
-        if (this.o == null) {
+        btnCancel.setVisible(false);
+        btnConfirm.setVisible(false);
+        btnMarkDelivering.setVisible(false);
+        btnCompleteOrder.setVisible(false);
+
+        if (u == null || u.getUserId() <= 0) {
+            showError("Người dùng chưa đăng nhập.");
             return;
         }
+        if (o == null || o.getOrderId() <= 0) {
+            showError("Đơn hàng không hợp lệ.");
+            return;
+        }
+
+        boolean isSeller = u.getUserId() == o.getSellerId();
+        boolean isBuyer = u.getUserId() == o.getBuyerId();
+        if (!isSeller && !isBuyer) {
+            showError("Bạn không có quyền xem đơn hàng này.");
+            return;
+        }
+
         lblOrderCode.setText("#" + o.getOrderId());
         lblSeller.setText("User #" + o.getSellerId());
-        lblStatus.setText(o.getStatus());
-        lblFulfillment.setText(o.getFulfillmentMethod());
-        lblPayment.setText(o.getPaymentMethod() + " (" + o.getPaymentStatus() + ")");
+
+        String[] statusCodes = {"PENDING", "CONFIRMED", "DELIVERING", "COMPLETED", "CANCELLED"};
+        String[] statusNames = {"Chờ xác nhận", "Đã xác nhận", "Đang giao", "Đã hoàn tất", "Đã hủy"};
+        String statusText = o.getStatus();
+        for (int i = 0; i < statusCodes.length; i++) {
+            if (statusCodes[i].equalsIgnoreCase(o.getStatus())) {
+                statusText = statusNames[i];
+                break;
+            }
+        }
+        lblStatus.setText(statusText);
+
+        String fulfillmentText = o.getFulfillmentMethod();
+        if ("MEETUP".equalsIgnoreCase(o.getFulfillmentMethod())) {
+            fulfillmentText = "Gặp trực tiếp";
+        } else if ("SHIPPING".equalsIgnoreCase(o.getFulfillmentMethod())) {
+            fulfillmentText = "Giao hàng";
+        }
+        lblFulfillment.setText(fulfillmentText);
         lblMeetupPlace.setText(o.getMeetupPlace() != null ? o.getMeetupPlace() : "");
+
+        String paymentMethodText = "CASH_ON_MEETUP".equalsIgnoreCase(o.getPaymentMethod())
+                ? "Tiền mặt khi gặp" : o.getPaymentMethod();
+        String paymentStatusText = "PAID".equalsIgnoreCase(o.getPaymentStatus())
+                ? "Đã thanh toán"
+                : ("UNPAID".equalsIgnoreCase(o.getPaymentStatus()) ? "Chưa thanh toán" : o.getPaymentStatus());
+        lblPayment.setText(paymentMethodText + " (" + paymentStatusText + ")");
+
         lblTotal.setText(String.format("%,.0f đ", o.getTotalAmount()));
         lblCancellationReason.setText(o.getCancelledBy() > 0 ? "Đã hủy bởi User #" + o.getCancelledBy() : "");
 
@@ -150,18 +210,17 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         }
 
         pnlTimeline.removeAll();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         String latestTime = "";
         if (o.getStatusHistory() != null) {
-            for (OrderStatusHistory h : o.getStatusHistory()) {
-                String timeText = h.getCreatedAt() != null ? h.getCreatedAt().toString() : "";
+            for (OrderStatusHistory history : o.getStatusHistory()) {
+                String timeText = history.getCreatedAt() != null ? dateFormat.format(history.getCreatedAt()) : "";
                 if (!timeText.isEmpty()) {
                     latestTime = timeText;
                 }
-                String line = String.format("[%s] %s -> %s (by User #%d)",
-                        timeText,
-                        h.getFromStatus() != null ? h.getFromStatus() : "INIT",
-                        h.getToStatus(),
-                        h.getChangedBy());
+                String fromStatus = history.getFromStatus() != null ? history.getFromStatus() : "INIT";
+                String changedBy = history.getChangedBy() > 0 ? "User #" + history.getChangedBy() : "Hệ thống";
+                String line = String.format("[%s] %s -> %s (%s)", timeText, fromStatus, history.getToStatus(), changedBy);
                 pnlTimeline.add(new JLabel(line));
             }
         }
@@ -170,7 +229,21 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         pnlTimeline.repaint();
 
         OrderDAO orderDAO = new OrderDAO();
-        btnCancel.setEnabled(orderDAO.canCancelOrder(u, o.getOrderId()));
+        if (isBuyer && orderDAO.canCancelOrder(u, o.getOrderId())) {
+            btnCancel.setVisible(true);
+            btnCancel.setEnabled(true);
+        }
+        btnConfirm.setVisible(isSeller && "PENDING".equalsIgnoreCase(o.getStatus()));
+        btnMarkDelivering.setVisible(isSeller
+                && "CONFIRMED".equalsIgnoreCase(o.getStatus())
+                && "SHIPPING".equalsIgnoreCase(o.getFulfillmentMethod()));
+        btnCompleteOrder.setVisible((isBuyer || isSeller)
+                && "CONFIRMED".equalsIgnoreCase(o.getStatus())
+                && "MEETUP".equalsIgnoreCase(o.getFulfillmentMethod())
+                && "PAID".equalsIgnoreCase(o.getPaymentStatus()));
+
+        revalidate();
+        repaint();
     }
 
     private void btnBackClick() {
@@ -182,27 +255,99 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         cancelFrm.setVisible(true);
     }
 
-    public void reloadOrder() {
+    private void btnConfirmClick() {
+        ConfirmOrderFrm frm = new ConfirmOrderFrm(u, o, this);
+        frm.setVisible(true);
+    }
+
+    private void btnMarkDeliveringClick() {
+        lblMessage.setText(" ");
+        btnMarkDelivering.setEnabled(false);
         try {
             OrderDAO orderDAO = new OrderDAO();
-            this.o = orderDAO.getOrderDetail(u, o.getOrderId());
-            displayOrder();
-            showMessage("Đã cập nhật trạng thái đơn hàng.");
+            if (orderDAO.markDelivering(u, o)) {
+                reloadOrder();
+            } else {
+                showError("Không thể đánh dấu đơn đang giao.");
+            }
         } catch (Exception ex) {
-            showMessage(ex.getMessage());
+            showError(ex.getMessage());
+        } finally {
+            btnMarkDelivering.setEnabled(true);
         }
     }
 
-    private void showMessage(String msg) {
+    private void btnCompleteOrderClick() {
+        lblMessage.setText(" ");
+        btnCompleteOrder.setEnabled(false);
+        try {
+            OrderDAO orderDAO = new OrderDAO();
+            if (orderDAO.completeOrder(u, o)) {
+                reloadOrder();
+            } else {
+                showError("Không thể hoàn tất đơn hàng.");
+            }
+        } catch (Exception ex) {
+            showError(ex.getMessage());
+        } finally {
+            btnCompleteOrder.setEnabled(true);
+        }
+    }
+
+    public void reloadOrder() {
+        btnCancel.setVisible(false);
+        btnConfirm.setVisible(false);
+        btnMarkDelivering.setVisible(false);
+        btnCompleteOrder.setVisible(false);
+
+        if (u == null || u.getUserId() <= 0) {
+            showError("Người dùng chưa đăng nhập.");
+            return;
+        }
+        if (o == null || o.getOrderId() <= 0) {
+            showError("Đơn hàng không hợp lệ.");
+            return;
+        }
+
+        try {
+            String previousStatus = o.getStatus();
+            OrderDAO orderDAO = new OrderDAO();
+            this.o = orderDAO.getOrderDetail(u, o.getOrderId());
+
+            displayOrder();
+
+            lblMessage.setForeground(new Color(0, 128, 0));
+            if ("PENDING".equalsIgnoreCase(previousStatus) && "CONFIRMED".equalsIgnoreCase(o.getStatus())) {
+                lblMessage.setText("Chấp nhận đơn hàng thành công.");
+            } else if ("CONFIRMED".equalsIgnoreCase(previousStatus) && "DELIVERING".equalsIgnoreCase(o.getStatus())) {
+                lblMessage.setText("Đã đánh dấu đơn đang giao thành công.");
+            } else if ("CONFIRMED".equalsIgnoreCase(previousStatus) && "COMPLETED".equalsIgnoreCase(o.getStatus())) {
+                lblMessage.setText("Hoàn tất đơn hàng thành công.");
+            } else {
+                lblMessage.setText("Đã cập nhật trạng thái đơn hàng.");
+            }
+        } catch (Exception ex) {
+            showError("Không thể tải lại đơn hàng: " + ex.getMessage());
+        }
+    }
+
+    private void showError(String msg) {
+        lblMessage.setForeground(Color.RED);
         lblMessage.setText(msg != null ? msg : "");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btnCancel) {
-            btnCancelClick();
-        } else if (e.getSource() == btnBack) {
+        if (e.getSource() == btnBack) {
             btnBackClick();
+        } else if (e.getSource() == btnCancel) {
+            btnCancelClick();
+        } else if (e.getSource() == btnConfirm) {
+            btnConfirmClick();
+        } else if (e.getSource() == btnMarkDelivering) {
+            btnMarkDeliveringClick();
+        } else if (e.getSource() == btnCompleteOrder) {
+            btnCompleteOrderClick();
         }
     }
 }
