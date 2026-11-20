@@ -1,8 +1,8 @@
 package view;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
@@ -17,33 +17,51 @@ import model.User;
 public class HomeFrm extends JFrame implements ActionListener {
     private JLabel lblWelcome;
     private JButton btnFindListings;
+    private JButton btnCreateListing;
+    private JButton btnProfile;
+    private JButton btnBuyingOrders;
+    private JButton btnSellingOrders;
     private JButton btnLogout;
     private User u;
 
     public HomeFrm(User u) {
         this.u = u;
         setTitle("Chợ PTITers - Trang chủ");
-        setSize(520, 260);
+        setSize(580, 320);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
         lblWelcome = new JLabel("", SwingConstants.CENTER);
         lblWelcome.setFont(new Font("Arial", Font.BOLD, 16));
-        lblWelcome.setBorder(BorderFactory.createEmptyBorder(30, 15, 15, 15));
+        lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 15, 10, 15));
         displayWelcome();
-        add(lblWelcome, BorderLayout.CENTER);
+        add(lblWelcome, BorderLayout.NORTH);
 
-        JPanel pnlActions = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
-        btnFindListings = new JButton("Tìm kiếm tin đăng");
+        JPanel pnlActions = new JPanel(new GridLayout(3, 2, 12, 12));
+        pnlActions.setBorder(BorderFactory.createEmptyBorder(10, 25, 25, 25));
+
+        btnFindListings = new JButton("Tìm kiếm & Mua hàng");
+        btnCreateListing = new JButton("Đăng tin bán mới");
+        btnProfile = new JButton("Hồ sơ & Tin đăng của tôi");
+        btnBuyingOrders = new JButton("Đơn mua của tôi");
+        btnSellingOrders = new JButton("Đơn bán của tôi");
         btnLogout = new JButton("Đăng xuất");
 
         btnFindListings.addActionListener(this);
+        btnCreateListing.addActionListener(this);
+        btnProfile.addActionListener(this);
+        btnBuyingOrders.addActionListener(this);
+        btnSellingOrders.addActionListener(this);
         btnLogout.addActionListener(this);
 
         pnlActions.add(btnFindListings);
+        pnlActions.add(btnCreateListing);
+        pnlActions.add(btnProfile);
+        pnlActions.add(btnBuyingOrders);
+        pnlActions.add(btnSellingOrders);
         pnlActions.add(btnLogout);
-        add(pnlActions, BorderLayout.SOUTH);
+        add(pnlActions, BorderLayout.CENTER);
     }
 
     public void displayWelcome() {
@@ -55,7 +73,15 @@ public class HomeFrm extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnFindListings) {
-            new FindListingsFrm().setVisible(true);
+            new FindListingsFrm(u).setVisible(true);
+        } else if (e.getSource() == btnCreateListing) {
+            new CreateListingFrm(u.getUserId()).setVisible(true);
+        } else if (e.getSource() == btnProfile) {
+            new ProfileFrm(u).setVisible(true);
+        } else if (e.getSource() == btnBuyingOrders) {
+            new BuyingOrdersFrm(u).setVisible(true);
+        } else if (e.getSource() == btnSellingOrders) {
+            new SellingOrdersFrm(u).setVisible(true);
         } else if (e.getSource() == btnLogout) {
             btnLogoutClick();
         }
