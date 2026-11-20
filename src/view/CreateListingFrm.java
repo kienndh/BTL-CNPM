@@ -1,12 +1,12 @@
-package com.ptit.choptiters.view;
+package view;
 
-import com.ptit.choptiters.dao.CategoryDAO;
-import com.ptit.choptiters.dao.ProductDAO;
-import com.ptit.choptiters.dao.ProductImageDAO;
-import com.ptit.choptiters.dao.UserDAO;
-import com.ptit.choptiters.model.Category;
-import com.ptit.choptiters.model.Product;
-import com.ptit.choptiters.model.ProductImage;
+import dao.CategoryDAO;
+import dao.ProductDAO;
+import dao.ProductImageDAO;
+import dao.UserDAO;
+import model.Category;
+import model.Product;
+import model.ProductImage;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
