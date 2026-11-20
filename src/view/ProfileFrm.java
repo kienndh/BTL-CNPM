@@ -1,7 +1,7 @@
-package com.ptit.choptiters.view;
+package view;
 
-import com.ptit.choptiters.dao.UserDAO;
-import com.ptit.choptiters.model.User;
+import dao.UserDAO;
+import model.User;
 
 import javax.swing.*;
 import java.awt.*;

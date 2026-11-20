@@ -1,6 +1,6 @@
-package com.ptit.choptiters.dao;
+package dao;
 
-import com.ptit.choptiters.model.Category;
+import model.Category;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

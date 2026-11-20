@@ -1,6 +1,6 @@
-package com.ptit.choptiters.dao;
+package dao;
 
-import com.ptit.choptiters.model.ProductImage;
+import model.ProductImage;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

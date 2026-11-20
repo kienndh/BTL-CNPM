@@ -1,10 +1,14 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Product {
     private int productId;
     private int sellerId;
     private int categoryId;
     private String title;
+    private String description;
     private float price;
     private int stock;
     private int reservedStock;
@@ -12,11 +16,12 @@ public class Product {
     private String approvalStatus;
     private String moderationStatus;
     private boolean isDeleted;
-    private String description;
+    private List<ProductImage> images = new ArrayList<>();
 
     public Product() {
     }
 
+    // Constructor của module-1
     public Product(int productId, int sellerId, int categoryId, String title, float price,
                    int stock, int reservedStock, String status, String approvalStatus,
                    String moderationStatus, boolean isDeleted, String description) {
@@ -35,102 +40,45 @@ public class Product {
     }
 
     public int getAvailableStock() {
-        return Math.max(0, this.stock - this.reservedStock);
+        return Math.max(0, stock - reservedStock);
     }
 
-    public int getProductId() {
-        return productId;
-    }
+    public int getProductId() { return productId; }
+    public void setProductId(int productId) { this.productId = productId; }
 
-    public void setProductId(int productId) {
-        this.productId = productId;
-    }
+    public int getSellerId() { return sellerId; }
+    public void setSellerId(int sellerId) { this.sellerId = sellerId; }
 
-    public int getSellerId() {
-        return sellerId;
-    }
+    public int getCategoryId() { return categoryId; }
+    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
-    public void setSellerId(int sellerId) {
-        this.sellerId = sellerId;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public int getCategoryId() {
-        return categoryId;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setCategoryId(int categoryId) {
-        this.categoryId = categoryId;
-    }
+    public float getPrice() { return price; }
+    public void setPrice(float price) { this.price = price; }
 
-    public String getTitle() {
-        return title;
-    }
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public int getReservedStock() { return reservedStock; }
+    public void setReservedStock(int reservedStock) { this.reservedStock = reservedStock; }
 
-    public float getPrice() {
-        return price;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setPrice(float price) {
-        this.price = price;
-    }
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
 
-    public int getStock() {
-        return stock;
-    }
+    public String getModerationStatus() { return moderationStatus; }
+    public void setModerationStatus(String moderationStatus) { this.moderationStatus = moderationStatus; }
 
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
 
-    public int getReservedStock() {
-        return reservedStock;
-    }
-
-    public void setReservedStock(int reservedStock) {
-        this.reservedStock = reservedStock;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getApprovalStatus() {
-        return approvalStatus;
-    }
-
-    public void setApprovalStatus(String approvalStatus) {
-        this.approvalStatus = approvalStatus;
-    }
-
-    public String getModerationStatus() {
-        return moderationStatus;
-    }
-
-    public void setModerationStatus(String moderationStatus) {
-        this.moderationStatus = moderationStatus;
-    }
-
-    public boolean isDeleted() {
-        return isDeleted;
-    }
-
-    public void setDeleted(boolean deleted) {
-        isDeleted = deleted;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public List<ProductImage> getImages() { return images; }
+    public void setImages(List<ProductImage> images) { this.images = images; }
 }

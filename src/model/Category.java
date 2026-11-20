@@ -1,4 +1,4 @@
-package com.ptit.choptiters.model;
+package model;
 
 public class Category {
     private int categoryId;
