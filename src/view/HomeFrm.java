@@ -2,6 +2,7 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.awt.Window;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -90,7 +91,13 @@ public class HomeFrm extends JFrame implements ActionListener {
     private void btnLogoutClick() {
         this.u = null;
         JOptionPane.showMessageDialog(this, "Đăng xuất thành công!");
-        new LoginFrm().setVisible(true);
+        // Đóng các cửa sổ thuộc phiên cũ để không thể tiếp tục thao tác sau đăng xuất.
+        for (Window window : Window.getWindows()) {
+            if (window != this && window.isDisplayable()) {
+                window.dispose();
+            }
+        }
         dispose();
+        new LoginFrm().setVisible(true);
     }
 }

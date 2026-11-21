@@ -32,7 +32,7 @@ public class BuyingOrdersFrm extends JFrame implements ActionListener {
                 "Đã hủy",
                 "Tất cả"
         });
-        cboStatus.setSelectedIndex(1);
+        cboStatus.setSelectedIndex(5); // Mặc định hiển thị Tất cả, gồm đơn PENDING vừa tạo.
 
         DefaultTableModel model = new DefaultTableModel(
                 new String[]{

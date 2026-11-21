@@ -46,6 +46,23 @@ public class ProductDAO extends DAO {
     }
 
 
+    /** Tin đăng của người bán, bao gồm tin đã rút (HIDDEN) để quản lý, không gồm tin đã xóa. */
+    public List<Product> getMyListings(int sellerId) {
+        List<Product> listings = new ArrayList<>();
+        String sql = SELECT_COLUMNS + "WHERE sellerId = ? AND isDeleted = FALSE ORDER BY productId DESC";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, sellerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    listings.add(mapProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Không thể tải tin đăng của tôi: " + e.getMessage(), e);
+        }
+        return listings;
+    }
+
     public Product getProductDetail(int productId) {
         String sql = SELECT_COLUMNS + "WHERE productId = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {

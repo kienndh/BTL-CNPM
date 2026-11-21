@@ -69,7 +69,8 @@ public class ProductDetailFrm extends JFrame implements ActionListener {
 
         int available = p.getStock() - p.getReservedStock();
         lblProductTitle.setText(p.getTitle());
-        lblSeller.setText("User #" + p.getSellerId());
+        boolean isOwner = u != null && u.getUserId() == p.getSellerId();
+        lblSeller.setText(isOwner ? "Bạn (User #" + p.getSellerId() + ")" : "User #" + p.getSellerId());
         lblAvailableStock.setText(String.valueOf(available));
         lblSaleType.setText(String.format("%,.0f đ", p.getPrice()));
         lblListingStatus.setText(p.getStatus());
@@ -83,6 +84,14 @@ public class ProductDetailFrm extends JFrame implements ActionListener {
                 && "CLEAR".equalsIgnoreCase(p.getModerationStatus())
                 && available > 0;
         btnOrder.setEnabled(canOrder);
+        if (isOwner) {
+            btnOrder.setText("Tin đăng của bạn");
+            btnOrder.setToolTipText("Không thể đặt mua tin đăng do chính mình tạo");
+        } else if (u == null) {
+            btnOrder.setText("Đăng nhập để đặt mua");
+        } else {
+            btnOrder.setText("Đặt mua");
+        }
     }
 
     private void btnOrderClick() {

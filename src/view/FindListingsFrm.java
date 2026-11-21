@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.BorderFactory;
@@ -41,7 +42,7 @@ public class FindListingsFrm extends JFrame implements ActionListener {
     public FindListingsFrm(User u) {
         this.u = u;
         setTitle("Chợ PTITers - Tìm kiếm tin đăng");
-        setSize(760, 460);
+        setSize(860, 460);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
@@ -62,7 +63,7 @@ public class FindListingsFrm extends JFrame implements ActionListener {
         pnlSearch.add(btnViewDetail);
         add(pnlSearch, BorderLayout.NORTH);
 
-        String[] cols = {"Mã tin", "Tên sản phẩm", "Giá bán (VNĐ)", "Số lượng còn lại", "Trạng thái"};
+        String[] cols = {"Mã tin", "Tên sản phẩm", "Giá bán (VNĐ)", "Số lượng còn lại", "Trạng thái", "Phân loại"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -116,12 +117,18 @@ public class FindListingsFrm extends JFrame implements ActionListener {
         String keyword = txtKeyword.getText();
         ProductDAO productDAO = new ProductDAO();
         List<Product> list = productDAO.findPublicListings(keyword);
+        // Tin của người khác lên trước, tin của mình xuống cuối; trong mỗi nhóm: tin mới trước.
+        if (u != null) {
+            list.sort(Comparator
+                    .comparingInt((Product p) -> p.getSellerId() == u.getUserId() ? 1 : 0)
+                    .thenComparing(Comparator.comparingInt(Product::getProductId).reversed()));
+        }
 
         displayListings(list);
         if (list.isEmpty()) {
             showMessage("Không tìm thấy tin đăng phù hợp!");
         } else {
-            showMessage("Tìm thấy " + list.size() + " tin đăng phù hợp. Nháy đúp chuột vào dòng để xem chi tiết & đặt mua.");
+            showMessage("Tìm thấy " + list.size() + " tin đăng. Tin của bạn nằm cuối danh sách và không thể tự đặt mua.");
         }
     }
 
@@ -139,7 +146,8 @@ public class FindListingsFrm extends JFrame implements ActionListener {
                 p.getTitle(),
                 nf.format(p.getPrice()),
                 p.getAvailableStock(),
-                p.getStatus()
+                p.getStatus(),
+                u != null && p.getSellerId() == u.getUserId() ? "Tin của bạn" : "Người khác"
             });
         }
     }

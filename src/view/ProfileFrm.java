@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 public class ProfileFrm extends JFrame implements ActionListener {
     private JTextField txtPhone;
     private JButton btnSave;
+    private JButton btnMyListings;
     private JLabel lblName, lblEmail, lblMessage;
     private User u;
     private final UserDAO userDAO = new UserDAO();
@@ -25,6 +26,7 @@ public class ProfileFrm extends JFrame implements ActionListener {
             displayProfile(this.u);
         } catch (RuntimeException ex) {
             btnSave.setEnabled(false);
+            btnMyListings.setEnabled(false);
             showMessage(ex.getMessage());
         }
     }
@@ -34,8 +36,10 @@ public class ProfileFrm extends JFrame implements ActionListener {
         lblEmail = new JLabel();
         txtPhone = new JTextField(15);
         btnSave = new JButton("Lưu");
+        btnMyListings = new JButton("Tin đăng của tôi");
         lblMessage = new JLabel(" ");
         btnSave.addActionListener(this);
+        btnMyListings.addActionListener(this);
 
         JPanel form = new JPanel(new GridLayout(3, 2, 8, 8));
         form.add(new JLabel("Họ tên:"));
@@ -45,8 +49,12 @@ public class ProfileFrm extends JFrame implements ActionListener {
         form.add(new JLabel("Số điện thoại:"));
         form.add(txtPhone);
 
+        JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
+        actions.add(btnSave);
+        actions.add(btnMyListings);
+
         JPanel bottom = new JPanel(new BorderLayout(5, 5));
-        bottom.add(btnSave, BorderLayout.NORTH);
+        bottom.add(actions, BorderLayout.NORTH);
         bottom.add(lblMessage, BorderLayout.SOUTH);
 
         JPanel root = new JPanel(new BorderLayout(10, 10));
@@ -64,6 +72,8 @@ public class ProfileFrm extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnSave) {
             btnSaveClick();
+        } else if (e.getSource() == btnMyListings) {
+            new MyListingsFrm(u).setVisible(true);
         }
     }
 
