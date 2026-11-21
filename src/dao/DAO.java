@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DAO {
-    protected static Connection con;
+    public static Connection con;
 
     private static final String DB_URL = "jdbc:mysql://localhost:3306/cho_ptiters"
             + "?useSSL=false&allowPublicKeyRetrieval=true"

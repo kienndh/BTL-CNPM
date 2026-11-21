@@ -24,7 +24,6 @@ public class OrderDAO extends DAO {
         super();
     }
 
-    // ==================== MODULE 3: ĐẶT ĐƠN / XEM ĐƠN MUA / HỦY ĐƠN ====================
 
     public Order createOrder(User u, int productId, int quantity,
                              String contactName, String contactPhone,
@@ -329,7 +328,6 @@ public class OrderDAO extends DAO {
         }
     }
 
-    // ==================== MODULE 4: XỬ LÝ ĐƠN BÁN / ĐANG GIAO / HOÀN TẤT ====================
 
     public ArrayList<Order> listSellingOrders(User u, String status) {
         requireUser(u);
@@ -537,7 +535,6 @@ public class OrderDAO extends DAO {
         }
     }
 
-    /** Đơn gặp trực tiếp: hoàn tất khi đã xác nhận. Đơn giao hàng: hoàn tất khi đang giao. */
     public static boolean canComplete(Order o) {
         if (o == null) {
             return false;
@@ -546,7 +543,6 @@ public class OrderDAO extends DAO {
                 || ("SHIPPING".equalsIgnoreCase(o.getFulfillmentMethod()) && "DELIVERING".equalsIgnoreCase(o.getStatus()));
     }
 
-    // ==================== HELPER CHUNG ====================
 
     private List<OrderItem> fetchOrderItems(int orderId) throws SQLException {
         List<OrderItem> items = new ArrayList<>();
