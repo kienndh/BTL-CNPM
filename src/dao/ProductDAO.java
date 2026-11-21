@@ -65,7 +65,7 @@ public class ProductDAO extends DAO {
 
         String sql = "INSERT INTO tblProduct (sellerId, categoryId, title, description, price, stock, "
                 + "reservedStock, status, approvalStatus, moderationStatus, isDeleted) "
-                + "VALUES (?, ?, ?, ?, ?, ?, 0, 'AVAILABLE', 'PENDING', 'CLEAR', FALSE)";
+                + "VALUES (?, ?, ?, ?, ?, ?, 0, 'AVAILABLE', 'APPROVED', 'CLEAR', FALSE)";
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, sellerId);
             ps.setInt(2, listingData.getCategoryId());
