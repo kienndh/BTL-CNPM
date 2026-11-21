@@ -49,8 +49,8 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         lblMeetupPlace = new JLabel();
         lblTotal = new JLabel();
         lblCreatedAt = new JLabel();
-        lblContactName = new JLabel(u != null && u.getFullName() != null ? u.getFullName() : "");
-        lblContactPhone = new JLabel(u != null && u.getPhone() != null ? u.getPhone() : "");
+        lblContactName = new JLabel();
+        lblContactPhone = new JLabel();
         lblCancellationReason = new JLabel();
 
         lblMessage = new JLabel(" ");
@@ -193,7 +193,15 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         lblPayment.setText(paymentMethodText + " (" + paymentStatusText + ")");
 
         lblTotal.setText(String.format("%,.0f đ", o.getTotalAmount()));
-        lblCancellationReason.setText(o.getCancelledBy() > 0 ? "Đã hủy bởi User #" + o.getCancelledBy() : "");
+        lblContactName.setText(o.getContactName() != null ? o.getContactName() : "");
+        lblContactPhone.setText(o.getContactPhone() != null ? o.getContactPhone() : "");
+        if (o.getCancelledBy() > 0) {
+            String reasonText = o.getCancelReason() != null && !o.getCancelReason().isEmpty()
+                    ? ": " + o.getCancelReason() : "";
+            lblCancellationReason.setText("Đã hủy bởi User #" + o.getCancelledBy() + reasonText);
+        } else {
+            lblCancellationReason.setText("");
+        }
 
         DefaultTableModel model = (DefaultTableModel) tblItems.getModel();
         model.setRowCount(0);
@@ -237,10 +245,7 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
         btnMarkDelivering.setVisible(isSeller
                 && "CONFIRMED".equalsIgnoreCase(o.getStatus())
                 && "SHIPPING".equalsIgnoreCase(o.getFulfillmentMethod()));
-        btnCompleteOrder.setVisible((isBuyer || isSeller)
-                && "CONFIRMED".equalsIgnoreCase(o.getStatus())
-                && "MEETUP".equalsIgnoreCase(o.getFulfillmentMethod())
-                && "PAID".equalsIgnoreCase(o.getPaymentStatus()));
+        btnCompleteOrder.setVisible((isBuyer || isSeller) && OrderDAO.canComplete(o));
 
         revalidate();
         repaint();
@@ -321,7 +326,8 @@ public class OrderDetailFrm extends JFrame implements ActionListener {
                 lblMessage.setText("Chấp nhận đơn hàng thành công.");
             } else if ("CONFIRMED".equalsIgnoreCase(previousStatus) && "DELIVERING".equalsIgnoreCase(o.getStatus())) {
                 lblMessage.setText("Đã đánh dấu đơn đang giao thành công.");
-            } else if ("CONFIRMED".equalsIgnoreCase(previousStatus) && "COMPLETED".equalsIgnoreCase(o.getStatus())) {
+            } else if (("CONFIRMED".equalsIgnoreCase(previousStatus) || "DELIVERING".equalsIgnoreCase(previousStatus))
+                    && "COMPLETED".equalsIgnoreCase(o.getStatus())) {
                 lblMessage.setText("Hoàn tất đơn hàng thành công.");
             } else {
                 lblMessage.setText("Đã cập nhật trạng thái đơn hàng.");

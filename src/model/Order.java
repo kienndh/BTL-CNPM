@@ -18,6 +18,10 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
     private Date completedAt;
+    private String contactName;
+    private String contactPhone;
+    private String note;
+    private String cancelReason;
 
     public Order() {
     }
@@ -124,5 +128,37 @@ public class Order {
 
     public void setCompletedAt(Date completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public String getContactName() {
+        return contactName;
+    }
+
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 }
