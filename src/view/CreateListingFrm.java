@@ -2,7 +2,6 @@ package view;
 
 import dao.CategoryDAO;
 import dao.ProductDAO;
-import dao.ProductImageDAO;
 import dao.UserDAO;
 import model.Category;
 import model.Product;
@@ -30,7 +29,6 @@ public class CreateListingFrm extends JFrame implements ActionListener {
     private final UserDAO userDAO = new UserDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
     private final ProductDAO productDAO = new ProductDAO();
-    private final ProductImageDAO productImageDAO = new ProductImageDAO();
 
     public CreateListingFrm(int sellerId) {
         super("Tạo tin đăng");
@@ -185,7 +183,6 @@ public class CreateListingFrm extends JFrame implements ActionListener {
 
         try {
             Product p = productDAO.createListing(sellerId, listingData);
-            productImageDAO.attachImages(p.getProductId(), images);
             displayProduct(p);
             showMessage("Tạo tin đăng thành công");
             resetForm();

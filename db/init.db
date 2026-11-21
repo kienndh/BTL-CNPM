@@ -1,6 +1,3 @@
--- ChoPTITers - schema gop 4 module (khop voi cac cau SQL trong src/dao)
--- Chay lai file nay se XOA va TAO LAI toan bo bang trong database cho_ptiters.
-
 CREATE DATABASE IF NOT EXISTS cho_ptiters
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE cho_ptiters;
@@ -36,7 +33,7 @@ CREATE TABLE tblCategory (
     isDeleted  BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- 3. San pham / tin dang (Module 1, 2, 3)
+-- 3. San pham / tin dang
 CREATE TABLE tblProduct (
     productId        INT AUTO_INCREMENT PRIMARY KEY,
     sellerId         INT NOT NULL,
@@ -54,7 +51,7 @@ CREATE TABLE tblProduct (
     CONSTRAINT fk_product_category FOREIGN KEY (categoryId) REFERENCES tblCategory(categoryId)
 );
 
--- 4. Hinh anh san pham (Module 2)
+-- 4. Hinh anh san pham
 CREATE TABLE tblProductImage (
     imageId     INT AUTO_INCREMENT PRIMARY KEY,
     productId   INT NOT NULL,
@@ -64,7 +61,7 @@ CREATE TABLE tblProductImage (
     CONSTRAINT fk_image_product FOREIGN KEY (productId) REFERENCES tblProduct(productId) ON DELETE CASCADE
 );
 
--- 5. Don hang (Module 3, 4)
+-- 5. Don hang
 CREATE TABLE tblOrder (
     orderId           INT AUTO_INCREMENT PRIMARY KEY,
     buyerId           INT NOT NULL,
@@ -75,12 +72,16 @@ CREATE TABLE tblOrder (
     paymentStatus     VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
     meetupPlace       VARCHAR(255) NULL,
     cancelledBy       INT NULL,
+    cancelReason      VARCHAR(500) NULL,
+    contactName       VARCHAR(100) NULL,
+    contactPhone      VARCHAR(15)  NULL,
+    note              VARCHAR(500) NULL,
     completedAt       DATETIME NULL,
     CONSTRAINT fk_order_buyer  FOREIGN KEY (buyerId)  REFERENCES tblUser(userId),
     CONSTRAINT fk_order_seller FOREIGN KEY (sellerId) REFERENCES tblUser(userId)
 );
 
--- 6. Chi tiet mat hang trong don (Module 3, 4)
+-- 6. Chi tiet mat hang trong don
 CREATE TABLE tblOrderItem (
     orderItemId     INT AUTO_INCREMENT PRIMARY KEY,
     orderId         INT NOT NULL,
@@ -92,7 +93,7 @@ CREATE TABLE tblOrderItem (
     CONSTRAINT fk_item_product FOREIGN KEY (productId) REFERENCES tblProduct(productId)
 );
 
--- 7. Lich su trang thai don (OrderDAO ghi ca orderId, changedBy va tblOrderId, tblUserId)
+-- 7. Lich su trang thai don
 CREATE TABLE tblOrderStatusHistory (
     historyId  INT AUTO_INCREMENT PRIMARY KEY,
     orderId    INT NOT NULL,

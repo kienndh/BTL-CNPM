@@ -56,11 +56,11 @@ public class OrderDAO extends DAO {
             con.setAutoCommit(false);
 
             String lockSql = "SELECT p.productId, p.sellerId, p.title, p.price, p.stock, p.reservedStock, "
-                           + "       p.status, p.approvalStatus, p.moderationStatus, p.isDeleted, "
-                           + "       seller.status AS sellerStatus "
-                           + "FROM tblProduct p "
-                           + "JOIN tblUser seller ON p.sellerId = seller.userId "
-                           + "WHERE p.productId = ? FOR UPDATE";
+                    + "       p.status, p.approvalStatus, p.moderationStatus, p.isDeleted, "
+                    + "       seller.status AS sellerStatus "
+                    + "FROM tblProduct p "
+                    + "JOIN tblUser seller ON p.sellerId = seller.userId "
+                    + "WHERE p.productId = ? FOR UPDATE";
 
             int sellerId;
             String title;
@@ -108,8 +108,8 @@ public class OrderDAO extends DAO {
             }
 
             String insertOrderSql = "INSERT INTO tblOrder (buyerId, sellerId, status, fulfillmentMethod, "
-                                  + "paymentMethod, paymentStatus, meetupPlace, cancelledBy) "
-                                  + "VALUES (?, ?, 'PENDING', ?, ?, 'UNPAID', ?, NULL)";
+                    + "paymentMethod, paymentStatus, meetupPlace, cancelledBy, contactName, contactPhone, note) "
+                    + "VALUES (?, ?, 'PENDING', ?, ?, 'UNPAID', ?, NULL, ?, ?, ?)";
             int newOrderId;
             try (PreparedStatement psOrder = con.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS)) {
                 psOrder.setInt(1, u.getUserId());
@@ -120,6 +120,13 @@ public class OrderDAO extends DAO {
                     psOrder.setNull(5, Types.VARCHAR);
                 } else {
                     psOrder.setString(5, meetupPlace.trim());
+                }
+                psOrder.setString(6, contactName.trim());
+                psOrder.setString(7, contactPhone.trim());
+                if (note == null || note.trim().isEmpty()) {
+                    psOrder.setNull(8, Types.VARCHAR);
+                } else {
+                    psOrder.setString(8, note.trim());
                 }
                 psOrder.executeUpdate();
 
@@ -132,7 +139,7 @@ public class OrderDAO extends DAO {
             }
 
             String insertItemSql = "INSERT INTO tblOrderItem (orderId, productId, productTitle, quantity, priceAtPurchase) "
-                                 + "VALUES (?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement psItem = con.prepareStatement(insertItemSql)) {
                 psItem.setInt(1, newOrderId);
                 psItem.setInt(2, productId);
@@ -143,7 +150,7 @@ public class OrderDAO extends DAO {
             }
 
             String insertHistSql = "INSERT INTO tblOrderStatusHistory (orderId, fromStatus, toStatus, changedBy, createdAt, tblUserId) "
-                                 + "VALUES (?, NULL, 'PENDING', ?, NOW(), ?)";
+                    + "VALUES (?, NULL, 'PENDING', ?, NOW(), ?)";
             try (PreparedStatement psHist = con.prepareStatement(insertHistSql)) {
                 psHist.setInt(1, newOrderId);
                 psHist.setInt(2, u.getUserId());
@@ -180,8 +187,8 @@ public class OrderDAO extends DAO {
             throw new IllegalStateException("Người dùng chưa đăng nhập.");
         }
         String sql = "SELECT orderId, buyerId, sellerId, status, fulfillmentMethod, "
-                   + "       paymentMethod, paymentStatus, meetupPlace, cancelledBy "
-                   + "FROM tblOrder WHERE orderId = ?";
+                + "       paymentMethod, paymentStatus, meetupPlace, cancelledBy, contactName, contactPhone, note, cancelReason "
+                + "FROM tblOrder WHERE orderId = ?";
         Order order;
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -284,15 +291,16 @@ public class OrderDAO extends DAO {
                 }
             }
 
-            String updateOrderSql = "UPDATE tblOrder SET status = 'CANCELLED', cancelledBy = ? WHERE orderId = ?";
+            String updateOrderSql = "UPDATE tblOrder SET status = 'CANCELLED', cancelledBy = ?, cancelReason = ? WHERE orderId = ?";
             try (PreparedStatement psUpdate = con.prepareStatement(updateOrderSql)) {
                 psUpdate.setInt(1, u.getUserId());
-                psUpdate.setInt(2, orderId);
+                psUpdate.setString(2, reason.trim());
+                psUpdate.setInt(3, orderId);
                 psUpdate.executeUpdate();
             }
 
             String insertHistSql = "INSERT INTO tblOrderStatusHistory (orderId, fromStatus, toStatus, changedBy, createdAt, tblUserId) "
-                                 + "VALUES (?, ?, 'CANCELLED', ?, NOW(), ?)";
+                    + "VALUES (?, ?, 'CANCELLED', ?, NOW(), ?)";
             try (PreparedStatement psHist = con.prepareStatement(insertHistSql)) {
                 psHist.setInt(1, orderId);
                 psHist.setString(2, currentStatus);
@@ -332,7 +340,7 @@ public class OrderDAO extends DAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT orderId, buyerId, sellerId, status, fulfillmentMethod, "
-                        + "paymentMethod, paymentStatus, meetupPlace, cancelledBy "
+                        + "paymentMethod, paymentStatus, meetupPlace, cancelledBy, contactName, contactPhone, note, cancelReason "
                         + "FROM tblOrder WHERE sellerId = ? ");
         if (filterByStatus) {
             sql.append("AND status = ? ");
@@ -367,7 +375,7 @@ public class OrderDAO extends DAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT orderId, buyerId, sellerId, status, fulfillmentMethod, "
-                        + "paymentMethod, paymentStatus, meetupPlace, cancelledBy "
+                        + "paymentMethod, paymentStatus, meetupPlace, cancelledBy, contactName, contactPhone, note, cancelReason "
                         + "FROM tblOrder WHERE buyerId = ? ");
         if (filterByStatus) {
             sql.append("AND status = ? ");
@@ -461,10 +469,9 @@ public class OrderDAO extends DAO {
             if (current.getBuyerId() != u.getUserId() && current.getSellerId() != u.getUserId()) {
                 throw new SecurityException("Chỉ người mua hoặc người bán của đơn được hoàn tất.");
             }
-            if (!"CONFIRMED".equalsIgnoreCase(current.getStatus())
-                    || !"MEETUP".equalsIgnoreCase(current.getFulfillmentMethod())
-                    || !"PAID".equalsIgnoreCase(current.getPaymentStatus())) {
-                throw new IllegalStateException("Đơn phải gặp trực tiếp, đã xác nhận và đã thanh toán để hoàn tất.");
+            if (!canComplete(current)) {
+                throw new IllegalStateException(
+                        "Chỉ hoàn tất được đơn gặp trực tiếp đã xác nhận hoặc đơn giao hàng đang giao.");
             }
             List<OrderItem> items = fetchOrderItems(current.getOrderId());
             if (items.isEmpty()) {
@@ -512,9 +519,11 @@ public class OrderDAO extends DAO {
                     requireOneRow(ps.executeUpdate());
                 }
             }
-            String updateOrderSql = "UPDATE tblOrder SET status = 'COMPLETED' WHERE orderId = ? AND status = 'CONFIRMED'";
+            String updateOrderSql = "UPDATE tblOrder SET status = 'COMPLETED', paymentStatus = 'PAID', "
+                    + "completedAt = NOW() WHERE orderId = ? AND status = ?";
             try (PreparedStatement ps = db.prepareStatement(updateOrderSql)) {
                 ps.setInt(1, current.getOrderId());
+                ps.setString(2, current.getStatus());
                 requireOneRow(ps.executeUpdate());
             }
             Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -528,16 +537,25 @@ public class OrderDAO extends DAO {
         }
     }
 
+    /** Đơn gặp trực tiếp: hoàn tất khi đã xác nhận. Đơn giao hàng: hoàn tất khi đang giao. */
+    public static boolean canComplete(Order o) {
+        if (o == null) {
+            return false;
+        }
+        return ("MEETUP".equalsIgnoreCase(o.getFulfillmentMethod()) && "CONFIRMED".equalsIgnoreCase(o.getStatus()))
+                || ("SHIPPING".equalsIgnoreCase(o.getFulfillmentMethod()) && "DELIVERING".equalsIgnoreCase(o.getStatus()));
+    }
+
     // ==================== HELPER CHUNG ====================
 
     private List<OrderItem> fetchOrderItems(int orderId) throws SQLException {
         List<OrderItem> items = new ArrayList<>();
         String sql = "SELECT oi.orderItemId, oi.orderId, oi.productId, oi.productTitle, oi.quantity, oi.priceAtPurchase, "
-                   + "       p.sellerId, p.categoryId, p.title, p.price, p.stock, p.reservedStock, "
-                   + "       p.status, p.approvalStatus, p.moderationStatus, p.isDeleted "
-                   + "FROM tblOrderItem oi "
-                   + "LEFT JOIN tblProduct p ON oi.productId = p.productId "
-                   + "WHERE oi.orderId = ? ORDER BY oi.orderItemId ASC";
+                + "       p.sellerId, p.categoryId, p.title, p.price, p.stock, p.reservedStock, "
+                + "       p.status, p.approvalStatus, p.moderationStatus, p.isDeleted "
+                + "FROM tblOrderItem oi "
+                + "LEFT JOIN tblProduct p ON oi.productId = p.productId "
+                + "WHERE oi.orderId = ? ORDER BY oi.orderItemId ASC";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -575,7 +593,7 @@ public class OrderDAO extends DAO {
     private List<OrderStatusHistory> fetchStatusHistory(int orderId) throws SQLException {
         List<OrderStatusHistory> list = new ArrayList<>();
         String sql = "SELECT historyId, orderId, fromStatus, toStatus, changedBy, createdAt "
-                   + "FROM tblOrderStatusHistory WHERE orderId = ? ORDER BY createdAt ASC, historyId ASC";
+                + "FROM tblOrderStatusHistory WHERE orderId = ? ORDER BY createdAt ASC, historyId ASC";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -607,6 +625,10 @@ public class OrderDAO extends DAO {
         o.setMeetupPlace(rs.getString("meetupPlace"));
         int cancelledBy = rs.getInt("cancelledBy");
         o.setCancelledBy(rs.wasNull() ? 0 : cancelledBy);
+        o.setContactName(rs.getString("contactName"));
+        o.setContactPhone(rs.getString("contactPhone"));
+        o.setNote(rs.getString("note"));
+        o.setCancelReason(rs.getString("cancelReason"));
         return o;
     }
 
@@ -633,7 +655,7 @@ public class OrderDAO extends DAO {
 
     private Order lockOrder(Connection db, int orderId) throws SQLException {
         String sql = "SELECT orderId, buyerId, sellerId, status, fulfillmentMethod, "
-                + "paymentMethod, paymentStatus, meetupPlace, cancelledBy "
+                + "paymentMethod, paymentStatus, meetupPlace, cancelledBy, contactName, contactPhone, note, cancelReason "
                 + "FROM tblOrder WHERE orderId = ? FOR UPDATE";
         try (PreparedStatement ps = db.prepareStatement(sql)) {
             ps.setInt(1, orderId);

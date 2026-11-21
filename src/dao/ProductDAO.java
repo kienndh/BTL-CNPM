@@ -1,6 +1,7 @@
 package dao;
 
 import model.Product;
+import model.ProductImage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,32 +61,72 @@ public class ProductDAO extends DAO {
         return null;
     }
 
+    /** UC06: kiểm tra dữ liệu, lưu tin đăng mới cùng hình ảnh trong một giao dịch và trả về tin vừa tạo. */
     public Product createListing(int sellerId, Product listingData) {
         validateListing(listingData);
 
         String sql = "INSERT INTO tblProduct (sellerId, categoryId, title, description, price, stock, "
                 + "reservedStock, status, approvalStatus, moderationStatus, isDeleted) "
                 + "VALUES (?, ?, ?, ?, ?, ?, 0, 'AVAILABLE', 'APPROVED', 'CLEAR', FALSE)";
-        try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, sellerId);
-            ps.setInt(2, listingData.getCategoryId());
-            ps.setString(3, listingData.getTitle().trim());
-            ps.setString(4, listingData.getDescription());
-            ps.setFloat(5, listingData.getPrice());
-            ps.setInt(6, listingData.getStock());
-            ps.executeUpdate();
-
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) {
-                    Product p = getProductDetail(keys.getInt(1));
-                    p.setImages(listingData.getImages());
-                    return p;
+        boolean prevAutoCommit = true;
+        try {
+            prevAutoCommit = con.getAutoCommit();
+            con.setAutoCommit(false);
+            int newId;
+            try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, sellerId);
+                ps.setInt(2, listingData.getCategoryId());
+                ps.setString(3, listingData.getTitle().trim());
+                ps.setString(4, listingData.getDescription());
+                ps.setFloat(5, listingData.getPrice());
+                ps.setInt(6, listingData.getStock());
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        throw new SQLException("Không lấy được mã tin vừa tạo");
+                    }
+                    newId = keys.getInt(1);
                 }
             }
-        } catch (SQLException e) {
+            insertImages(newId, listingData.getImages());
+            con.commit();
+            Product p = getProductDetail(newId);
+            p.setImages(listingData.getImages());
+            return p;
+        } catch (SQLException | RuntimeException e) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackEx) {
+                e.addSuppressed(rollbackEx);
+            }
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
             throw new RuntimeException("Lỗi tạo tin đăng: " + e.getMessage(), e);
+        } finally {
+            try {
+                con.setAutoCommit(prevAutoCommit);
+            } catch (SQLException ignored) {
+            }
         }
-        throw new RuntimeException("Tạo tin đăng thất bại");
+    }
+
+    private void insertImages(int productId, List<ProductImage> images) throws SQLException {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        String sql = "INSERT INTO tblProductImage (productId, imageUrl, isThumbnail, sortOrder) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            for (ProductImage img : images) {
+                img.setProductId(productId);
+                ps.setInt(1, productId);
+                ps.setString(2, img.getImageUrl());
+                ps.setBoolean(3, img.isThumbnail());
+                ps.setInt(4, img.getSortOrder());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
     }
 
     public Product getMyListingDetail(int productId, int sellerId) {
